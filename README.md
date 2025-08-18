@@ -3,7 +3,7 @@
 
 ## About The Project 💡
 
-Welcome to Project 1 of my System & Network Security series. In this project, I demonstrate how to build and secure a network from the ground up—showcasing the full process from initial setup to a hardened environment, all in real time.
+Welcome to Project 1 of my System & Network Security series. In this project, I demonstrate how to build and secure a network from the ground up—showcasing the full process from initial setup to a hardened environment, documenting my progress and difficulties. 
 
 ## 🔧 Built With
 #### Oracle VirtualBox  
