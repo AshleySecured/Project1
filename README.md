@@ -37,7 +37,7 @@ Once installed and configured correctly, your virtual machine should look like t
 
 [insert screenshot]## Links
 
-See the virtual environment come to life—watch the full walkthrough on YouTube!
+[See the virtual environment come to life—watch the full walkthrough on YouTube!](https://www.google.com)
 
 
 ## 🗺️ Roadmap
