@@ -104,6 +104,10 @@ At this point, your basic networking is complete.
 Once installed and configured correctly, your virtual machine network should look like this: <img width="956" height="799" alt="Screenshot 2025-08-18 174832" src="https://github.com/user-attachments/assets/1568e686-94d4-443b-945d-2a36b9c88563" />
 
 
+### *[Project is not yet complete, will be adding additional information]*
+
+
+
 
 ## 🗺️ Roadmap
 
