@@ -259,7 +259,28 @@ To get to Powershell:
 
 Now we can upload our script. For reference, I typed out the script below:
 
+$PASSWORD_FOR_USERS ="Password1"
+$USER_FIRST_LAST_LIST = Get-content .\names.txt
 
+$password = ConvertTo-SecureString $PASSWORD_FOR_USERS -AsPlainText - Force
+New -ADOrganizationalUnit - Name_USERS -ProtectedFromAccidentalDeletion $false
+
+
+foreach ($n in $USER_FIRST_LAST_LIST) {
+    $first = $n.Split(" ")[0].ToLower()
+    $last = $n.Split(" ")[1].ToLower()
+    $username = "$($first.substring(0,1))$($last.ToLower()
+    Write-Host "Creating user: $($username)" -BackgroundColor Black -ForegroundColor Cyan
+
+  New-AdUser - AccountPassword $password
+              - GivenName $first
+              - Surname $last
+              - Displayname $username
+              - Name $username
+              - EmployeeID $username
+              - PasswordNeverExpires $true
+              - Path "ou = _USERS, $(([ADSI]" ").distinguishedName)"
+              - Enabled $true
               
 
 
