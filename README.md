@@ -39,69 +39,228 @@ For more detailed instructions—such as what to check, uncheck, or type in the 
 For reference, I recreated my own notes from Josh's video of the Network Diagram to setup a successful environment. Please note, this diagram I drew from my own computer as reference for myself in the future. You can see Josh's original diagram in his video. <img width="856" height="415" alt="Screenshot 2025-08-19 120649" src="https://github.com/user-attachments/assets/36343fda-3946-49af-8350-9b02a9f504d0" />
 
 
-## Step 1: Setting Up NAT in VirtualBox
+## Setting Up NAT and Intranet in VirtualBox
 
-<b>Open VirtualBox Manager.</b>
+<b>Open VirtualBox Application.</b>
 
-*Go to File → Preferences → Network → NAT Networks.*
+*Go to New → Vitrual Machine Name → Type 'DC' → Windows Version: Windows 10 64-bit.*
 
-*Click the Add (+) button to create a new NAT network.*
+*Click the Ok button to establish the DC Server*
 
-*Give it a name (e.g., NATNetwork).*
+*Next, go to Settings -> General -> Under 'Features' choose 'Bidirectional' for Shared Clipboard & Drag-n-Drop*
 
-*Check Enable DHCP so VirtualBox can automatically assign IPs.*
+*Then, on the same Settings page, go to Network and checkbox Adapter 2*
+*Since we already have our built in NAT Network, we need to have an Internal Network as well*
+*Once checked, name this network INTRANet*
 
-<b>Attach your VMs to this network:</b>
+## Installing Windows Server 2019 ISO
 
-*Right-click a VM → Settings → Network.*
+<b>Double click on your DC Server to run it:</b>
 
-*Set Adapter 1 to NAT Network → Select your NATNetwork.*
+*Now that our DC Server is up and running, we can upload Windows Server 2019*
+*Open the DC Server and select the 'upload' icon*
+*Upload -> Server 2019 ISO file -> START*
 
-<b>Start your VM and test network connectivity with:</b>
+<b>Windows Server 2019 will pop up. Give this time to load.</b>
+*Once uploaded, click Next -> Install -> DESKTOP EXPERIENCE (Standard)*
+*Accept Terms -> CUSTOM: Install Windows Only -> Next -> SERVER WILL RESTART.*
 
-*ping google.com*
+<b>Windows Server 2019 ISO is now installed</b>
 
-## Step 2: Installing and Configuring RAS (Routing and Remote Access Services) on Server 2019
+## Setting up Default Admin Account
 
-<b>Inside your Windows Server 2019 VM, open Server Manager.</b>
+<b>Once installed, it's time to set up our Default Admin account</b>
 
-*Click Add Roles and Features.*
+*Give a generic password -> PASSWORD1 -> Finish*
 
-<b>In the wizard:</b>
+<b>Server is now up and running.</b>
 
-*Role-based or feature-based installation → Next.*
+*Use the input feature at the top menu bar of your VM -> Keyboard -> CTRL + ALT + DEL -> Login with password*
 
-*Select your server → Next.*
+## Setting up the IP Addresses
 
-<b>Under Server Roles, check Remote Access.</b>
+<b>Once we get to the Server Manager page, go to the bottom right of your VM -> Click computer icon -> Ethernet -> Change adapter options</b>
 
-*Expand it and select Routing → Next.*
+*Make sure you have 2 Ethernets*
 
-*Add required features → Next → Install.*
+*On your NAT Network, which is your HOME network -> right-click -> Status -> Details*
 
-<b>After installation, open Routing and Remote Access from the Tools menu.</b>
+<b>Input the IP Address below for your NAT Network:</b>
 
-*Right-click your server name → Configure and Enable Routing and Remote Access.*
+*IP address: 10.0.2.15*
+  **Note: When you see an IP Address beginning with '10', it is your home network.** 
 
-*Select NAT option in the wizard.*
+*Do the same for your Internal Network*
 
-*Choose the network interface connected to the internet (NAT).*
+*Right-click -> Status -> Details*
 
-*Apply and finish setup.*
+*IP Address: 169.254.196.79*
+  **Note: When you see an IP Address beginning with '169', it is your internal network.**
 
-<b>Verify NAT is working by joining your client VM to the internet through this server.</b>
+<b>Click OK and Restart the VM to confirm configurations</b>
 
-## Step 3: Verify Connectivity
+## Network Connectivity
 
-Test that your Server VM can access the internet.
+Login again after your restart.
 
-Test that your Client VM (e.g., Windows 10) can access the internet through the Server (via NAT + RAS).
+Go back to the Ethernet connections.
+*Right-click -> Internal Internet -> Properties -> (Double-Click) -> Internet Protocol Version 4 IPv4 -> Use this IP Address:*
+*IP Address: 172.16.0.1*
+*Subnet Mask: 255.255.255.0*
 
-At this point, your basic networking is complete.
+<b>On the same pop-up:</b>
+*Preferred DNS Server: 127.0.0.1*
+  - This IP Address is a generic address that will redirect the connection back to your own computer
 
-## Final Network Topology
+Click OK and close the window.
 
-Once installed and configured correctly, your virtual machine network should look like this: <img width="956" height="799" alt="Screenshot 2025-08-18 174832" src="https://github.com/user-attachments/assets/1568e686-94d4-443b-945d-2a36b9c88563" />
+## Installing Domain/AD DS/Create Domain
+
+**On the server manager:**
+*Click -> Add roles and features -> Next -> Next -> Choose the checkbox: Active Directory Domain Services -> Add features -> Next -> Install*
+
+**Back on the server manager screen:**
+
+You'll notice on the top right, there is a yellow triangle with an exclamation point in the center.
+*Click the triangle and select -> Promote this server to a DC*
+
+**On the deployment configuration page:**
+*Select -> Add new forest -> Root Domain Name: mydomain.com*
+*Click Next -> Enter password -> Next -> Next all the way -> Install.
+**It will restart again.**
+
+Now, when you log back on, you'll notice the screen say MYDOMAIN\Admin. This is what we want.
+
+Next, we have to create a dedicated domain admin account.
+
+**Go to:**
+1. Start
+2. Windows Administrative Tools
+3. AD Users and Computers
+   *Right-click on mydomain.com:*
+     - New
+     - Organizational Unit
+     - Name: _ADMINS
+   *Inside of _ADMINS:*
+      - Right-click
+      - New
+      - User
+      - Input name info
+      - User login name: a-(your first initial and full last name)
+      - Set password
+      - Uncheck the box: USER MUST CHANGE PASSWORD AT NEXT LOGON
+      - **Finish**
+  
+<b>Notice on your AD Users and Computers area, we now have an account - which is us!</b>
+
+*Next, we right-click on the account we just made -> Properties -> Member of -> Add:*
+Under *Select Groups*, type in DOMAIN ADMINS in the section 'Enter object names to select'.
+Click 'Check names'
+'Apply'
+'OK'
+
+Now that we have our Domain account, let's test it.
+<b>To Test this:</b>
+*Logout*
+*Select 'Other User'*
+*Use your domain account:* a-asomereville
+                          Password1
+<b>This should pull your name from the Active Directory</b>
+
+Domain installation is done.
+
+## Installing RAS/NAT
+
+We use RAS/NAT Networks to allow clients to be on a private virtual network of their own, but can still access the internet through the DC.
+
+<b>To do this:</b>
+1. Go back to server manager -> Add roles and features
+2. Click Next 3x
+3. At Roles -> Select the box that says REMOTE ACCESS
+4. Next
+5. At Role Services -> Select ROUTING
+6. Next 3x
+7. Install
+8. Close
+
+*The REMOTE ACCESS option allows clients to use the internet from the main domain. Even though they are not necessarily 'remote' as the name suggests, they are logging on remotely from their computer as a user and not an admin. Same network just different computers, thats why it's called remote.*
+
+After we'eve installed these features, we need to configure our DC Server to update these changes.
+
+<b>To do this:</b>
+1. On your Server Manager screen, on the top-right select -> Tools
+2. Scroll down to where it says ROUTING AND REMOTE ACCESS
+3. Select -> DC Server -> Right-click this
+4. Configure and Enable
+5. Next
+
+Now, we will be at a configuration screen. At the screen:
+1. Select -> Network Address Translation (NAT)
+2. Next
+3. Under NAT Connection, fill this in:
+   - 'Use the public interface to connect to the internet'
+   - Select the NAT or HOME internet
+   - Next
+   - Finish
+  
+Going back to DHCP -> Tools -> DHCP
+*Now you should see a GREEN arrow next to your DC Server, letting you know your server is up and running and totally configured.*
+
+<b>So far, we've set up our Domain and the RAS/NAT servers.</b>
+
+Before moving onto the Client Server, we have to set up the DHCP Server on our DC.
+  *-The DHCP Server lets our clients obtain and IP Address when connected to the internet so they can freely browse the internet within the company's limits.*
+
+<b>To set up DHCP:</b>
+1. Go to -> Add roles and features
+2. Next
+3. Next
+4. Server roles -> DHCP -> Add features -> Next 3x -> Install -> Close
+
+<b>Next, to go:</b>
+1. Tools -> DHCP to set up a scope
+
+<b>Once open, click on your domain server:</b> *Notice how both servers are down*
+1. Right-click the first server: IPv4
+2. 'New Scope' -> Next
+3. *Name the scope what the IP Range is*
+
+*IP Range is: 172.16.0.100-200*
+
+4. Next
+5. No exclusions
+6. Next
+7. Select 'yes' for configurations
+8. Next
+
+For Router (Default Gateway), use the DC IP Address:
+*IP Address: 172.16.0.1*
+
+9. Next
+10. Next
+11. 'Now WINS Servers'
+12. Next
+
+<b>Activate Scope</b>
+*Select 'Yes, I want to activate this scope now*
+
+13. Next
+14. Finish
+15. Now, right-click on your server -> Select Authorize -> Refresh
+
+<b>Both of your servers should now be GREEN.</b>
+
+Before we create the Client Server and join our Domain, we need to create our PowerShell script to create users in our AD. Thanks to Josh Madakor, the PS Script has already been created for us but I would review the lines of code to ensure we understand <b>why</b> were using this script and <b>what</b> it does.
+
+To get to Powershell:
+1. Windows Start
+2. Windows Powershell
+3. Windows Powershell ISE -> Right-click -> More -> 'Run as Administrator'
+
+Now we can upload our script. For reference, I typed out the script below:
+
+
+              
 
 
 ### *[Project is not yet complete, will be adding additional information]*
