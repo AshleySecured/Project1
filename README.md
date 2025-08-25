@@ -39,7 +39,7 @@ For more detailed instructions—such as what to check, uncheck, or type in the 
 For reference, I recreated my own notes from Josh's video of the Network Diagram to setup a successful environment. Please note, this diagram I drew from my own computer as reference for myself in the future. You can see Josh's original diagram in his video. <img width="856" height="415" alt="Screenshot 2025-08-19 120649" src="https://github.com/user-attachments/assets/36343fda-3946-49af-8350-9b02a9f504d0" />
 
 
-## Setting Up NAT and Intranet in VirtualBox
+## <h2>Setting Up NAT and Intranet in VirtualBox</h2>
 
 <b>Open VirtualBox Application.</b>
 
@@ -53,7 +53,7 @@ For reference, I recreated my own notes from Josh's video of the Network Diagram
 *Since we already have our built in NAT Network, we need to have an Internal Network as well*
 *Once checked, name this network INTRANet*
 
-## Installing Windows Server 2019 ISO
+## <h2>Installing Windows Server 2019 ISO</h2>
 
 <b>Double click on your DC Server to run it:</b>
 
@@ -67,7 +67,7 @@ For reference, I recreated my own notes from Josh's video of the Network Diagram
 
 <b>Windows Server 2019 ISO is now installed</b>
 
-## Setting up Default Admin Account
+## <h2>Setting up Default Admin Account</h2>
 
 <b>Once installed, it's time to set up our Default Admin account</b>
 
@@ -77,7 +77,7 @@ For reference, I recreated my own notes from Josh's video of the Network Diagram
 
 *Use the input feature at the top menu bar of your VM -> Keyboard -> CTRL + ALT + DEL -> Login with password*
 
-## Setting up the IP Addresses
+## <h2>Setting up the IP Addresses</h2>
 
 <b>Once we get to the Server Manager page, go to the bottom right of your VM -> Click computer icon -> Ethernet -> Change adapter options</b>
 
@@ -99,7 +99,7 @@ For reference, I recreated my own notes from Josh's video of the Network Diagram
 
 <b>Click OK and Restart the VM to confirm configurations</b>
 
-## Network Connectivity
+## <h2>Network Connectivity</h2>
 
 Login again after your restart.
 
@@ -114,7 +114,7 @@ Go back to the Ethernet connections.
 
 Click OK and close the window.
 
-## Installing Domain/AD DS/Create Domain
+## <h2>Installing Domain/AD DS/Create Domain</h2>
 
 **On the server manager:**
 *Click -> Add roles and features -> Next -> Next -> Choose the checkbox: Active Directory Domain Services -> Add features -> Next -> Install*
@@ -169,7 +169,7 @@ Now that we have our Domain account, let's test it.
 
 Domain installation is done.
 
-## Installing RAS/NAT
+## <h2>Installing RAS/NAT</h2>
 
 We use RAS/NAT Networks to allow clients to be on a private virtual network of their own, but can still access the internet through the DC.
 
@@ -208,7 +208,7 @@ Going back to DHCP -> Tools -> DHCP
 
 <b>So far, we've set up our Domain and the RAS/NAT servers.</b>
 
-Before moving onto the Client Server, we have to set up the DHCP Server on our DC.
+<h3>Before moving onto the Client Server, we have to set up the DHCP Server on our DC.</h3>
   *-The DHCP Server lets our clients obtain and IP Address when connected to the internet so they can freely browse the internet within the company's limits.*
 
 <b>To set up DHCP:</b>
@@ -250,29 +250,29 @@ For Router (Default Gateway), use the DC IP Address:
 
 <b>Both of your servers should now be GREEN.</b>
 
-Before we create the Client Server and join our Domain, we need to create our PowerShell script to create users in our AD. Thanks to Josh Madakor, the PS Script has already been created for us but I would review the lines of code to ensure we understand <b>why</b> were using this script and <b>what</b> it does.
+<h3>Before we create the Client Server and join our Domain, we need to create our PowerShell script to create users in our AD. Thanks to Josh Madakor, the PS Script has already been created for us but I would review the lines of code to ensure we understand <b>why</b> were using this script and <b>what</b> it does.</h3>
 
 To get to Powershell:
 1. Windows Start
 2. Windows Powershell
 3. Windows Powershell ISE -> Right-click -> More -> 'Run as Administrator'
 
-Now we can upload our script. For reference, I typed out the script below:
+<b>Now we can upload our script. For reference, I typed out the script below:</b>
 
-$PASSWORD_FOR_USERS ="Password1"
-$USER_FIRST_LAST_LIST = Get-content .\names.txt
+<code>$PASSWORD_FOR_USERS ="Password1"
+$USER_FIRST_LAST_LIST = Get-content .\names.txt</code>
 
-$password = ConvertTo-SecureString $PASSWORD_FOR_USERS -AsPlainText - Force
-New -ADOrganizationalUnit - Name_USERS -ProtectedFromAccidentalDeletion $false
+<code>$password = ConvertTo-SecureString $PASSWORD_FOR_USERS -AsPlainText - Force
+New -ADOrganizationalUnit - Name_USERS -ProtectedFromAccidentalDeletion $false</code>
 
 
-foreach ($n in $USER_FIRST_LAST_LIST) {
+<code>foreach ($n in $USER_FIRST_LAST_LIST) {
     $first = $n.Split(" ")[0].ToLower()
     $last = $n.Split(" ")[1].ToLower()
     $username = "$($first.substring(0,1))$($last.ToLower()
-    Write-Host "Creating user: $($username)" -BackgroundColor Black -ForegroundColor Cyan
+    Write-Host "Creating user: $($username)" -BackgroundColor Black -ForegroundColor Cyan</code>
 
-  New-AdUser - AccountPassword $password
+  <code>New-AdUser - AccountPassword $password
               - GivenName $first
               - Surname $last
               - Displayname $username
@@ -280,14 +280,85 @@ foreach ($n in $USER_FIRST_LAST_LIST) {
               - EmployeeID $username
               - PasswordNeverExpires $true
               - Path "ou = _USERS, $(([ADSI]" ").distinguishedName)"
-              - Enabled $true
+              - Enabled $true</code>
+ 
               
+Once we have our PS, we have to run and test these generated names. If you run the code on its own, it'll have an 'unauthorized' pushback message. To fix this, type this into the command line:
+1. *Set-ExecutionPolicy Unrestriced*
+2. Run code again.
+3. Next, change the directory to the area your CREATE USERS file is located. For me, it's on my Desktop. So this is the code:
+4. cd c:\Users\a-asomereville\Desktop\AD_PS-master
+
+Run this directory and your names should begin auto-generating and saving into our USERS directory.
+
+## <h3>Alrighty! Now that we've established our Domain Controller, our RAS/NAT networks, and generated our psuedo-users database, we can finally create our CLIENT Server.</h3>
+
+<b>To do this:</b>
+1. Go back to your VM (Virtual Machine)
+2. Create NEW
+3. Name this server - CLIENT1
+4. In the Windows Server section, choose Windows 10 64-bit
+5. Continue to default selections
+6. Before we actually turn on the server, go to -> Settings -> Advanced -> Turn on 'Bidirectional' for both options
+7. For the Network, instead of using NAT and connecting to the HOME network, select -> 'Internal Network' so we can get a DHCP address from our DC.
+8. Click 'OK' and open your CLIENT1 Server
+
+<b>After bootup:</b>
+1. Upload the Windows 10 ISO file
+2. Next
+3. Install
+4. Select on the bottom 'I do not have a product key'
+5. Select Windows 10 Pro from the list
+6. Custom
+7. Next
+
+<b>The system will now RESTART.</b>
+
+8. Go through the initial set up
+9. Skip the keyboard layout
+10. Choose 'Use limited set up' on your bottom left
+
+<h2>Now that our CLIENT1 Server is up and running, let's check if we actally have internet.</h2>
+
+In your command line:
+1. Type ipconfig
+
+A list will populate. Look for the section that says 'Default Gateway'. If no Default Gateway is shown, do this:
+    - <b>Go to DC</b>
+     1. Open DHCP from Tools
+     2. On your IPv4 Server -> right-click server -> Select Configure -> Click ROUTER -> Add DC IP Address -> Apply -> Add
+
+Go back to your command line and type 'ipconfig' again. 
+
+If the Default Gateway is still not showing, type: ipconfig/renew
+
+It should populate now.
+
+With all great installed applications, we need to test our work. 
+
+To do this:
+1. Go back to your command line
+2. Type this: *ping mydomain.com*
+
+It should return with a ping number, meaning it has found the domain through the network connections.
+
+Our last step is to make sure this computer is a member of the domain we have.
+
+To do this:
+1. Go to START -> SYSTEM
+2. Scroll down to where it says 'Rename this PC'
+3. Change name -> CLIENT1
+
+Click the Domain -> type mydomain.com into the area that says 'Member of'.
+
+Click 'OK'.
+
+The system will restart. 
+
+And were done!
 
 
-### *[Project is not yet complete, will be adding additional information]*
-
-
-
+---
 
 ## 🗺️ Roadmap
 
